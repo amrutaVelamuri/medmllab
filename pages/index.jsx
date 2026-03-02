@@ -843,14 +843,13 @@ Return ONLY valid JSON (no markdown fences):
     setLoading(false);
   }
 
-  async function save() {
-    if (!result) return;
-    try {
-      await window.storage.set(`bp_${Date.now()}`, JSON.stringify({topic, purpose, result, date: new Date().toLocaleDateString()}));
-      setSaved(true);
-    } catch {}
-  }
-
+  function save() {
+  if (!result) return;
+  try {
+    localStorage.setItem(`bp_${Date.now()}`, JSON.stringify({topic, purpose, result, date: new Date().toLocaleDateString()}));
+    setSaved(true);
+  } catch(e) { console.error(e); }
+}
   return (
     <div>
       <div className="card">
