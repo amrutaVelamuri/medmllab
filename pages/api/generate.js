@@ -2,7 +2,6 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: "No prompt" });
-
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -11,9 +10,7 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
       },
       body: JSON.stringify({
-       model: model: "mistralai/mistral-7b-instruct:free",
-
-
+        model: "mistralai/mistral-7b-instruct:free",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1000,
       }),
