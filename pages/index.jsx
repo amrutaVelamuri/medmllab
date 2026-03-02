@@ -943,22 +943,19 @@ function Saved() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await window.storage.list("bp_");
-        const loaded = await Promise.all((r?.keys||[]).map(async k => {
-          try { const d = await window.storage.get(k); return {key:k,...JSON.parse(d.value)}; } catch { return null; }
-        }));
-        setItems(loaded.filter(Boolean).reverse());
-      } catch {}
-      setLoading(false);
-    })();
-  }, []);
-
-  async function remove(key) {
-    try { await window.storage.delete(key); setItems(items.filter(i=>i.key!==key)); } catch {}
-  }
+useEffect(() => {
+  try {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith("bp_"));
+    const loaded = keys.map(k => {
+      try { return {key: k, ...JSON.parse(localStorage.getItem(k))}; } catch { return null; }
+    }).filter(Boolean).reverse();
+    setItems(loaded);
+  } catch(e) { console.error(e); }
+  setLoading(false);
+}, []);
+  function remove(key) {
+  try { localStorage.removeItem(key); setItems(items.filter(i=>i.key!==key)); } catch {}
+}
 
   if (loading) return <div className="card"><div className="shimmer shimmer-line" style={{width:"60%"}}/></div>;
   if (!items.length) return <div className="card" style={{textAlign:"center",padding:48}}><div style={{fontSize:"2rem",marginBottom:12}}>📂</div><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:"1.2rem",fontWeight:700,marginBottom:8}}>No saved blueprints yet</div><div style={{color:"var(--muted)",fontSize:".85rem"}}>Generate a blueprint and hit Save.</div></div>;
