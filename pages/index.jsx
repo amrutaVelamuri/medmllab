@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import Head from "next/head";
 
-/* ─── CALL AI (Gemini via serverless proxy) ─────────────────────────────── */
 async function callAI(prompt) {
   const res = await fetch("/api/generate", {
     method: "POST",
@@ -20,7 +19,6 @@ function extractJSON(text) {
   } catch { return null; }
 }
 
-/* ─── 24 DISEASES ───────────────────────────────────────────────────────── */
 const DISEASES = {
   pneumonia: {
     name: "Pneumonia", emoji: "🫁", dataType: "Chest X-Ray", model: "ResNet-50 CNN",
@@ -456,129 +454,155 @@ const DISEASES = {
   }
 };
 
-const ALL_TAGS = ["all", "imaging", "tabular", "NLP", "time-series", "genomics", "3D", "multimodal", "oncology", "neurology", "cardiology", "ICU"];
+/* ─── DATASET METADATA ───────────────────────────────────────────────────── */
+const DATASET_META = {
+  pneumonia:    { samples:"112,120", features:"1024x1024px images", task:"Binary Classification", classes:[{label:"Normal",pct:62},{label:"Pneumonia",pct:38}] },
+  diabetes:     { samples:"768", features:"8 clinical features", task:"Binary Classification", classes:[{label:"No Diabetes",pct:65},{label:"Diabetes",pct:35}] },
+  alzheimers:   { samples:"10,000+", features:"3D MRI volumes", task:"4-Class Classification", classes:[{label:"CN",pct:40},{label:"MCI",pct:35},{label:"AD",pct:20},{label:"Severe",pct:5}] },
+  skincancer:   { samples:"10,015", features:"600x450px images", task:"7-Class Classification", classes:[{label:"Melanocytic nevi",pct:67},{label:"Melanoma",pct:11},{label:"BCC",pct:5},{label:"Other",pct:17}] },
+  retinopathy:  { samples:"88,702", features:"Fundus images", task:"5-Grade Ordinal", classes:[{label:"Grade 0",pct:73},{label:"Grade 1",pct:7},{label:"Grade 2",pct:15},{label:"Grade 3",pct:2},{label:"Grade 4",pct:3}] },
+  sepsis:       { samples:"40,336", features:"40 clinical variables", task:"Binary + Time-Series", classes:[{label:"No Sepsis",pct:92},{label:"Sepsis",pct:8}] },
+  cancer_pathology: { samples:"30,000+", features:"Gigapixel WSI tiles", task:"Multi-Class", classes:[{label:"Normal",pct:40},{label:"Low Grade",pct:35},{label:"High Grade",pct:25}] },
+  heart_failure: { samples:"299", features:"13 clinical features", task:"Binary Classification", classes:[{label:"Survived",pct:68},{label:"Death Event",pct:32}] },
+  covid:        { samples:"21,165", features:"299x299px images", task:"3-Class Classification", classes:[{label:"Normal",pct:47},{label:"COVID",pct:31},{label:"Viral Pneumonia",pct:22}] },
+  stroke:       { samples:"400", features:"3D MRI volumes", task:"Segmentation + Classification", classes:[{label:"Ischemic",pct:70},{label:"Hemorrhagic",pct:30}] },
+  lung_cancer:  { samples:"888 CTs", features:"3D volumes + nodule coords", task:"Detection + Malignancy", classes:[{label:"Benign Nodule",pct:75},{label:"Malignant",pct:25}] },
+  mental_health:{ samples:"1,746", features:"Text + audio features", task:"Binary Classification", classes:[{label:"Control",pct:70},{label:"Depression",pct:30}] },
+  breast_cancer:{ samples:"10,239", features:"Mammogram images", task:"Binary + BI-RADS Grade", classes:[{label:"Benign",pct:60},{label:"Malignant",pct:40}] },
+  parkinson:    { samples:"195", features:"22 voice features", task:"Binary Classification", classes:[{label:"Healthy",pct:25},{label:"Parkinson's",pct:75}] },
+  kidney_disease:{ samples:"400", features:"24 lab features", task:"Binary Classification", classes:[{label:"No CKD",pct:50},{label:"CKD",pct:50}] },
+  drug_discovery:{ samples:"700,000+", features:"Molecular graph", task:"Property Regression + Classification", classes:[{label:"Inactive",pct:85},{label:"Active",pct:15}] },
+  icu_mortality: { samples:"33,798", features:"17 time-series variables", task:"Binary Classification", classes:[{label:"Survived",pct:86},{label:"Died",pct:14}] },
+  medical_imaging_segmentation:{ samples:"2,000+", features:"CT/MRI volumes", task:"Semantic Segmentation", classes:[{label:"Background",pct:80},{label:"Organ",pct:20}] },
+  genomics:     { samples:"1,000,000+", features:"DNA sequence variants", task:"Binary Classification", classes:[{label:"Benign",pct:88},{label:"Pathogenic",pct:12}] },
+  wound_care:   { samples:"1,000+", features:"RGB images", task:"Multi-Class", classes:[{label:"Granulation",pct:45},{label:"Slough",pct:35},{label:"Necrosis",pct:20}] },
+  ehr_nlp:      { samples:"2,000,000+", features:"Clinical text", task:"NER + Relation Extraction", classes:[{label:"Negative",pct:72},{label:"Positive",pct:28}] },
+  pain_assessment:{ samples:"200", features:"Video + EEG signals", task:"Regression (0-10)", classes:[{label:"No Pain",pct:40},{label:"Mild",pct:35},{label:"Severe",pct:25}] },
+  rare_disease: { samples:"10,000+", features:"Facial images + HPO terms", task:"Multi-Class (1000+ classes)", classes:[{label:"Syndrome A",pct:5},{label:"Syndrome B",pct:4},{label:"Others",pct:91}] },
+  surgical_ai:  { samples:"80 videos", features:"Video frames (25fps)", task:"Phase Recognition + Detection", classes:[{label:"Phase 1-3",pct:45},{label:"Phase 4-6",pct:35},{label:"Phase 7",pct:20}] },
+};
 
-/* ─── STYLES ───────────────────────────────────────────────────────────────── */
+const ALL_TAGS = ["all","imaging","tabular","NLP","time-series","genomics","3D","multimodal","oncology","neurology","cardiology","ICU"];
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap');
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg: #020c17; --s1: #061526; --s2: #0a1f35; --s3: #0f2944;
-  --border: rgba(0,200,150,0.15); --border2: rgba(0,200,150,0.3);
-  --green: #00ff9d; --blue: #00b8ff; --red: #ff4d6d; --yellow: #ffd166;
-  --text: #d4efff; --muted: #567a9a; --dim: #2a4a6a;
-}
-body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
-body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,184,255,0.07) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,255,157,0.04) 0%, transparent 50%); }
-.app { position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 20px 100px; }
-.nav { display:flex; align-items:center; justify-content:space-between; padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:32px; }
-.logo { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:800; letter-spacing:1px; }
-.logo .dot { color:var(--green); }
-.logo .sub { font-size:0.7rem; font-family:'JetBrains Mono',monospace; color:var(--muted); display:block; letter-spacing:3px; margin-top:-4px; text-transform:uppercase; }
-.tabs { display:flex; gap:2px; background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:3px; }
-.tab { font-family:'JetBrains Mono',monospace; font-size:0.68rem; padding:7px 16px; border-radius:7px; cursor:pointer; border:none; background:transparent; color:var(--muted); transition:all .2s; letter-spacing:.5px; text-transform:uppercase; white-space:nowrap; }
-.tab.active { background:var(--green); color:var(--bg); font-weight:500; }
-.tab:not(.active):hover { color:var(--green); }
-.hero-eyebrow { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--green); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
-.hero-eyebrow::before { content:''; width:6px; height:6px; background:var(--green); border-radius:50%; animation:blink 2s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-.card { background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:16px; }
-.card-head { font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; font-weight:700; letter-spacing:.5px; margin-bottom:4px; display:flex; align-items:center; gap:10px; }
-.card-sub { color:var(--muted); font-size:0.82rem; margin-bottom:20px; }
-/* SEARCH */
-.search-bar { display:flex; align-items:center; gap:10px; background:var(--s2); border:1px solid var(--border2); border-radius:10px; padding:10px 16px; margin-bottom:14px; }
-.search-bar input { background:transparent; border:none; outline:none; color:var(--text); font-family:'Outfit',sans-serif; font-size:0.92rem; flex:1; }
-.search-bar input::placeholder { color:var(--muted); }
-.search-icon { color:var(--muted); font-size:1rem; }
-.search-count { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--muted); white-space:nowrap; }
-/* TAGS */
-.tag-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
-.filter-tag { font-family:'JetBrains Mono',monospace; font-size:0.65rem; padding:5px 10px; border-radius:6px; cursor:pointer; border:1px solid var(--border); background:var(--s2); color:var(--muted); transition:all .2s; text-transform:uppercase; letter-spacing:.5px; }
-.filter-tag:hover, .filter-tag.active { border-color:var(--green); color:var(--green); background:rgba(0,255,157,0.06); }
-/* DISEASE GRID */
-.disease-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:10px; max-height:520px; overflow-y:auto; padding-right:4px; }
-.disease-grid::-webkit-scrollbar { width:4px; }
-.disease-grid::-webkit-scrollbar-track { background:var(--s2); border-radius:2px; }
-.disease-grid::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
-.disease-btn { background:var(--s2); border:1px solid var(--border); border-radius:10px; padding:16px; cursor:pointer; text-align:left; transition:all .2s; }
-.disease-btn:hover { transform:translateY(-2px); border-color:var(--border2); }
-.disease-btn.selected { border-color:var(--green); background:rgba(0,255,157,0.05); }
-.disease-emoji { font-size:1.5rem; margin-bottom:8px; display:block; }
-.disease-name { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; margin-bottom:4px; line-height:1.1; }
-.disease-type { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--green); text-transform:uppercase; letter-spacing:.5px; }
-.disease-model { font-size:0.72rem; color:var(--muted); margin-top:4px; }
-.no-results { grid-column:1/-1; text-align:center; padding:40px; color:var(--muted); font-size:.9rem; }
-/* DETAIL */
-.pipeline { display:flex; align-items:center; gap:0; overflow-x:auto; padding:14px 0; margin:16px 0; scrollbar-width:none; }
-.pipeline::-webkit-scrollbar { display:none; }
-.pipe-node { background:var(--s2); border:1px solid var(--border2); border-radius:7px; padding:8px 12px; font-family:'JetBrains Mono',monospace; font-size:0.65rem; white-space:nowrap; animation:slideIn .4s both; flex-shrink:0; }
-@keyframes slideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
-.pipe-arrow { color:var(--dim); font-size:.9rem; margin:0 5px; flex-shrink:0; }
-.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
-.info-panel { background:var(--s2); border:1px solid var(--border); border-radius:10px; padding:14px; }
-.info-panel.full { grid-column:1/-1; }
-.info-panel-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--green); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
-.info-panel p { font-size:0.83rem; line-height:1.65; color:var(--text); font-weight:300; }
-.metric-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); }
-.metric-row:last-child { border:none; }
-.metric-name { font-family:'JetBrains Mono',monospace; font-size:0.7rem; min-width:160px; }
-.metric-val { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--green); font-weight:500; min-width:60px; }
-.metric-desc { font-size:0.78rem; color:var(--muted); }
-.dataset-card { display:flex; align-items:center; justify-content:space-between; background:var(--s3); border:1px solid var(--border); border-radius:8px; padding:10px 14px; margin-bottom:8px; text-decoration:none; transition:all .2s; }
-.dataset-card:hover { border-color:var(--blue); }
-.dataset-name { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--blue); }
-.dataset-meta { font-size:0.7rem; color:var(--muted); margin-top:2px; }
-.challenge-item { display:flex; gap:10px; padding:7px 0; border-bottom:1px solid var(--border); font-size:0.82rem; line-height:1.5; }
-.challenge-item:last-child { border:none; }
-.challenge-num { font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--red); background:rgba(255,77,109,0.1); border-radius:4px; padding:2px 5px; height:fit-content; flex-shrink:0; }
-.stake-box { background:rgba(255,77,109,0.06); border:1px solid rgba(255,77,109,0.3); border-radius:10px; padding:12px 14px; margin-top:12px; display:flex; gap:10px; }
-.stake-text { font-size:0.82rem; line-height:1.6; color:#ffb3c0; }
-/* FORM */
-.field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
-.field label { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
-.field input, .field select, .field textarea { background:var(--s2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif; font-size:0.9rem; padding:10px 14px; outline:none; transition:border .2s; width:100%; }
-.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green); }
-.field select option { background:var(--s2); }
-.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.btn { display:inline-flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; letter-spacing:.5px; text-transform:uppercase; padding:11px 22px; border-radius:9px; border:none; cursor:pointer; transition:all .2s; font-weight:500; }
-.btn-green { background:var(--green); color:var(--bg); }
-.btn-green:hover { background:#33ffb2; transform:translateY(-1px); box-shadow:0 4px 20px rgba(0,255,157,.3); }
-.btn-green:disabled { opacity:.35; cursor:not-allowed; transform:none; box-shadow:none; }
-.btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--green); }
-.btn-ghost:hover { background:rgba(0,255,157,.08); }
-.spinner { width:16px; height:16px; border:2px solid rgba(0,255,157,.2); border-top-color:var(--green); border-radius:50%; animation:spin .7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.out-section { margin-top:20px; animation:fadeUp .4s both; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-.out-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.out-card { background:var(--s2); border:1px solid var(--border); border-radius:10px; padding:16px; animation:fadeUp .4s both; }
-.out-card.accent { border-color:rgba(0,255,157,.3); background:rgba(0,255,157,.04); }
-.out-label { font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--green); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
-.out-title { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:6px; }
-.out-body { font-size:0.82rem; color:var(--muted); line-height:1.65; }
-.out-link { display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--blue); text-decoration:none; margin-top:8px; border:1px solid rgba(0,184,255,.3); border-radius:6px; padding:5px 10px; transition:all .2s; }
-.out-link:hover { background:rgba(0,184,255,.1); }
-.shimmer { background:linear-gradient(90deg, var(--s2) 25%, var(--s3) 50%, var(--s2) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
-@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-.shimmer-line { height:14px; margin-bottom:8px; }
-.chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
-.chip { font-size:0.78rem; padding:6px 12px; border-radius:7px; cursor:pointer; border:1px solid var(--border); background:var(--s2); color:var(--muted); transition:all .2s; }
-.chip:hover, .chip.active { border-color:var(--green); color:var(--green); background:rgba(0,255,157,.06); }
-.timeline .tl-item { display:flex; gap:14px; padding:10px 0; position:relative; }
-.timeline .tl-item:not(:last-child)::after { content:''; position:absolute; left:15px; top:36px; bottom:0; width:1px; background:var(--border2); }
-.tl-dot { width:30px; height:30px; background:var(--s3); border:2px solid var(--green); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--green); flex-shrink:0; z-index:1; }
-.tl-week { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--muted); }
-.tl-task { font-size:0.85rem; margin-top:2px; }
-.saved-card { background:var(--s2); border:1px solid var(--border); border-radius:10px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:all .2s; margin-bottom:10px; }
-.saved-card:hover { border-color:var(--border2); }
-@media(max-width:640px) { .form-row{grid-template-columns:1fr} .info-grid{grid-template-columns:1fr} .out-grid{grid-template-columns:1fr} .tabs{display:none} .disease-grid{grid-template-columns:repeat(2,1fr)} }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#020c17;--s1:#061526;--s2:#0a1f35;--s3:#0f2944;--border:rgba(0,200,150,0.15);--border2:rgba(0,200,150,0.3);--green:#00ff9d;--blue:#00b8ff;--red:#ff4d6d;--yellow:#ffd166;--text:#d4efff;--muted:#567a9a;--dim:#2a4a6a;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,184,255,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(0,255,157,0.04) 0%,transparent 50%);}
+.app{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 20px 100px;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:32px;}
+.logo{font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:1px;}
+.logo .dot{color:var(--green);}
+.logo .sub{font-size:0.7rem;font-family:'JetBrains Mono',monospace;color:var(--muted);display:block;letter-spacing:3px;margin-top:-4px;text-transform:uppercase;}
+.tabs{display:flex;gap:2px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:3px;}
+.tab{font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:7px 16px;border-radius:7px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+.tab.active{background:var(--green);color:var(--bg);font-weight:500;}
+.tab:not(.active):hover{color:var(--green);}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.hero-eyebrow::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px;}
+.card-head{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+.card-sub{color:var(--muted);font-size:0.82rem;margin-bottom:20px;}
+.search-bar{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:10px 16px;margin-bottom:14px;}
+.search-bar input{background:transparent;border:none;outline:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:0.92rem;flex:1;}
+.search-bar input::placeholder{color:var(--muted);}
+.search-count{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);white-space:nowrap;}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.filter-tag{font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:5px 10px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--muted);transition:all .2s;text-transform:uppercase;letter-spacing:.5px;}
+.filter-tag:hover,.filter-tag.active{border-color:var(--green);color:var(--green);background:rgba(0,255,157,0.06);}
+.disease-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;max-height:520px;overflow-y:auto;padding-right:4px;}
+.disease-grid::-webkit-scrollbar{width:4px;}
+.disease-grid::-webkit-scrollbar-track{background:var(--s2);border-radius:2px;}
+.disease-grid::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.disease-btn{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;text-align:left;transition:all .2s;}
+.disease-btn:hover{transform:translateY(-2px);border-color:var(--border2);}
+.disease-btn.selected{border-color:var(--green);background:rgba(0,255,157,0.05);}
+.disease-emoji{font-size:1.5rem;margin-bottom:8px;display:block;}
+.disease-name{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;margin-bottom:4px;line-height:1.1;}
+.disease-type{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);text-transform:uppercase;letter-spacing:.5px;}
+.disease-model{font-size:0.72rem;color:var(--muted);margin-top:4px;}
+.no-results{grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:.9rem;}
+.pipeline{display:flex;align-items:center;overflow-x:auto;padding:14px 0;margin:16px 0;scrollbar-width:none;}
+.pipeline::-webkit-scrollbar{display:none;}
+.pipe-node{background:var(--s2);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:0.65rem;white-space:nowrap;animation:slideIn .4s both;flex-shrink:0;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.pipe-arrow{color:var(--dim);font-size:.9rem;margin:0 5px;flex-shrink:0;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.info-panel{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.info-panel.full{grid-column:1/-1;}
+.info-panel-label{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.info-panel p{font-size:0.83rem;line-height:1.65;color:var(--text);font-weight:300;}
+.metric-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);}
+.metric-row:last-child{border:none;}
+.metric-name{font-family:'JetBrains Mono',monospace;font-size:0.7rem;min-width:160px;}
+.metric-val{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--green);font-weight:500;min-width:60px;}
+.metric-desc{font-size:0.78rem;color:var(--muted);}
+.dataset-card{display:flex;align-items:center;justify-content:space-between;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+.dataset-card:hover{border-color:var(--blue);}
+.dataset-name{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--blue);}
+.dataset-meta{font-size:0.7rem;color:var(--muted);margin-top:2px;}
+.challenge-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.82rem;line-height:1.5;}
+.challenge-item:last-child{border:none;}
+.challenge-num{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--red);background:rgba(255,77,109,0.1);border-radius:4px;padding:2px 5px;height:fit-content;flex-shrink:0;}
+.stake-box{background:rgba(255,77,109,0.06);border:1px solid rgba(255,77,109,0.3);border-radius:10px;padding:12px 14px;margin-top:12px;display:flex;gap:10px;}
+.stake-text{font-size:0.82rem;line-height:1.6;color:#ffb3c0;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.field label{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.field input,.field select,.field textarea{background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:0.9rem;padding:10px 14px;outline:none;transition:border .2s;width:100%;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);}
+.field select option{background:var(--s2);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;letter-spacing:.5px;text-transform:uppercase;padding:11px 22px;border-radius:9px;border:none;cursor:pointer;transition:all .2s;font-weight:500;}
+.btn-green{background:var(--green);color:var(--bg);}
+.btn-green:hover{background:#33ffb2;transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,255,157,.3);}
+.btn-green:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--green);}
+.btn-ghost:hover{background:rgba(0,255,157,.08);}
+.spinner{width:16px;height:16px;border:2px solid rgba(0,255,157,.2);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.out-section{margin-top:20px;animation:fadeUp .4s both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.out-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.out-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px;animation:fadeUp .4s both;}
+.out-card.accent{border-color:rgba(0,255,157,.3);background:rgba(0,255,157,.04);}
+.out-label{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.out-title{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+.out-body{font-size:0.82rem;color:var(--muted);line-height:1.65;}
+.out-link{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--blue);text-decoration:none;margin-top:8px;border:1px solid rgba(0,184,255,.3);border-radius:6px;padding:5px 10px;transition:all .2s;}
+.out-link:hover{background:rgba(0,184,255,.1);}
+.shimmer{background:linear-gradient(90deg,var(--s2) 25%,var(--s3) 50%,var(--s2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.shimmer-line{height:14px;margin-bottom:8px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.chip{font-size:0.78rem;padding:6px 12px;border-radius:7px;cursor:pointer;border:1px solid var(--border);background:var(--s2);color:var(--muted);transition:all .2s;}
+.chip:hover,.chip.active{border-color:var(--green);color:var(--green);background:rgba(0,255,157,.06);}
+.timeline .tl-item{display:flex;gap:14px;padding:10px 0;position:relative;}
+.timeline .tl-item:not(:last-child)::after{content:'';position:absolute;left:15px;top:36px;bottom:0;width:1px;background:var(--border2);}
+.tl-dot{width:30px;height:30px;background:var(--s3);border:2px solid var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--green);flex-shrink:0;z-index:1;}
+.tl-week{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);}
+.tl-task{font-size:0.85rem;margin-top:2px;}
+.saved-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s;margin-bottom:10px;}
+.saved-card:hover{border-color:var(--border2);}
+.ds-panel{background:var(--s2);border:1px solid rgba(0,184,255,.25);border-radius:12px;padding:18px;margin-top:0;margin-bottom:8px;animation:fadeUp .3s both;}
+.ds-panel-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.ds-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.ds-meta-item{background:var(--s3);border-radius:8px;padding:10px 12px;}
+.ds-meta-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.ds-meta-val{font-size:.85rem;font-weight:500;color:var(--text);}
+.dist-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.dist-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.dist-name{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text);min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dist-bar-wrap{flex:1;background:var(--s3);border-radius:4px;height:8px;overflow:hidden;}
+.dist-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .6s ease;}
+.dist-pct{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--green);min-width:32px;text-align:right;}
+@media(max-width:640px){.form-row{grid-template-columns:1fr}.info-grid{grid-template-columns:1fr}.out-grid{grid-template-columns:1fr}.tabs{display:none}.disease-grid{grid-template-columns:repeat(2,1fr)}}
 `;
 
-/* ─── APP ─────────────────────────────────────────────────────────────────── */
 export default function App() {
   const [tab, setTab] = useState(0);
-  const TABS = ["🔬 Explorer", "⚗️ Methodology", "📐 Blueprint", "💾 Saved"];
+  const TABS = ["🔬 Explorer","⚗️ Methodology","📐 Blueprint","💾 Saved"];
   return (
     <>
       <Head><title>MedML Lab — Healthcare AI for Students</title></Head>
@@ -586,7 +610,7 @@ export default function App() {
       <div className="app">
         <nav className="nav">
           <div className="logo">MedML<span className="dot">.</span>Lab<span className="sub">Healthcare AI for Students</span></div>
-          <div className="tabs">{TABS.map((t, i) => <button key={t} className={`tab ${tab===i?"active":""}`} onClick={() => setTab(i)}>{t}</button>)}</div>
+          <div className="tabs">{TABS.map((t,i)=><button key={t} className={`tab ${tab===i?"active":""}`} onClick={()=>setTab(i)}>{t}</button>)}</div>
         </nav>
         <div style={{marginBottom:28}}>
           <div className="hero-eyebrow">Free · Open Source · No Login</div>
@@ -604,20 +628,43 @@ export default function App() {
   );
 }
 
-/* ─── EXPLORER ─────────────────────────────────────────────────────────────── */
+function DatasetPanel({ diseaseKey }) {
+  const meta = DATASET_META[diseaseKey];
+  if (!meta) return null;
+  return (
+    <div className="ds-panel">
+      <div className="ds-panel-title">📊 Dataset Summary</div>
+      <div className="ds-meta-grid">
+        <div className="ds-meta-item"><div className="ds-meta-label">Samples</div><div className="ds-meta-val">{meta.samples}</div></div>
+        <div className="ds-meta-item"><div className="ds-meta-label">Features</div><div className="ds-meta-val">{meta.features}</div></div>
+        <div className="ds-meta-item" style={{gridColumn:"1/-1"}}><div className="ds-meta-label">ML Task</div><div className="ds-meta-val">{meta.task}</div></div>
+      </div>
+      <div className="dist-label">Class Distribution</div>
+      {meta.classes.map((c,i)=>(
+        <div key={i} className="dist-row">
+          <div className="dist-name">{c.label}</div>
+          <div className="dist-bar-wrap"><div className="dist-bar" style={{width:`${c.pct}%`}}/></div>
+          <div className="dist-pct">{c.pct}%</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Explorer() {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState("all");
   const [sel, setSel] = useState(null);
+  const [selDs, setSelDs] = useState(null);
 
-  const filtered = useMemo(() => {
-    return Object.entries(DISEASES).filter(([key, d]) => {
-      const matchesTag = activeTag === "all" || d.tags.includes(activeTag);
+  const filtered = useMemo(()=>{
+    return Object.entries(DISEASES).filter(([key,d])=>{
+      const matchesTag = activeTag==="all" || d.tags.includes(activeTag);
       const q = search.toLowerCase();
-      const matchesSearch = !q || d.name.toLowerCase().includes(q) || d.dataType.toLowerCase().includes(q) || d.tags.some(t => t.includes(q)) || d.overview.toLowerCase().includes(q);
+      const matchesSearch = !q || d.name.toLowerCase().includes(q) || d.dataType.toLowerCase().includes(q) || d.tags.some(t=>t.includes(q)) || d.overview.toLowerCase().includes(q);
       return matchesTag && matchesSearch;
     });
-  }, [search, activeTag]);
+  },[search,activeTag]);
 
   const d = sel ? DISEASES[sel] : null;
 
@@ -626,32 +673,26 @@ function Explorer() {
       <div className="card">
         <div className="card-head">🔬 Problem Explorer</div>
         <div className="card-sub">Browse 24 medical AI problems. Click any disease to see pipeline, datasets, metrics, and clinical stakes.</div>
-
-        {/* Search */}
         <div className="search-bar">
-          <span className="search-icon">🔍</span>
-          <input placeholder="Search diseases, data types, methods..." value={search} onChange={e => { setSearch(e.target.value); setSel(null); }} />
+          <span>🔍</span>
+          <input placeholder="Search diseases, data types, methods..." value={search} onChange={e=>{setSearch(e.target.value);setSel(null);setSelDs(null);}}/>
           <span className="search-count">{filtered.length} / {Object.keys(DISEASES).length}</span>
         </div>
-
-        {/* Tag filters */}
         <div className="tag-row">
-          {ALL_TAGS.map(tag => (
-            <div key={tag} className={`filter-tag ${activeTag===tag?"active":""}`} onClick={() => { setActiveTag(tag); setSel(null); }}>{tag}</div>
+          {ALL_TAGS.map(tag=>(
+            <div key={tag} className={`filter-tag ${activeTag===tag?"active":""}`} onClick={()=>{setActiveTag(tag);setSel(null);setSelDs(null);}}>{tag}</div>
           ))}
         </div>
-
         <div className="disease-grid">
-          {filtered.length === 0 ? (
-            <div className="no-results">No diseases match your search. Try a different term.</div>
-          ) : filtered.map(([key, dis]) => (
-            <button key={key} className={`disease-btn ${sel===key?"selected":""}`} onClick={() => setSel(sel===key ? null : key)}>
-              <span className="disease-emoji">{dis.emoji}</span>
-              <div className="disease-name">{dis.name}</div>
-              <div className="disease-type">{dis.dataType}</div>
-              <div className="disease-model">{dis.model}</div>
-            </button>
-          ))}
+          {filtered.length===0 ? <div className="no-results">No diseases match your search.</div> :
+            filtered.map(([key,dis])=>(
+              <button key={key} className={`disease-btn ${sel===key?"selected":""}`} onClick={()=>{setSel(sel===key?null:key);setSelDs(null);}}>
+                <span className="disease-emoji">{dis.emoji}</span>
+                <div className="disease-name">{dis.name}</div>
+                <div className="disease-type">{dis.dataType}</div>
+                <div className="disease-model">{dis.model}</div>
+              </button>
+            ))}
         </div>
       </div>
 
@@ -660,10 +701,10 @@ function Explorer() {
           <div className="card" style={{borderColor:"rgba(0,255,157,.2)"}}>
             <div className="card-head">{d.emoji} {d.name}</div>
             <div className="pipeline">
-              {d.pipeline.map((step, i) => (
+              {d.pipeline.map((step,i)=>(
                 <span key={i}>
                   <span className="pipe-node" style={{animationDelay:`${i*.07}s`}}>{step}</span>
-                  {i < d.pipeline.length-1 && <span className="pipe-arrow">→</span>}
+                  {i<d.pipeline.length-1 && <span className="pipe-arrow">→</span>}
                 </span>
               ))}
             </div>
@@ -675,7 +716,7 @@ function Explorer() {
 
           <div className="card">
             <div className="card-head">📊 Evaluation Metrics</div>
-            {d.metrics.map(m => (
+            {d.metrics.map(m=>(
               <div key={m.name} className="metric-row">
                 <div className="metric-name">{m.name}</div>
                 <div className="metric-val">{m.val}</div>
@@ -686,23 +727,32 @@ function Explorer() {
 
           <div className="card">
             <div className="card-head">📦 Public Datasets</div>
-            {d.datasets.map(ds => (
-              <a key={ds.name} href={ds.url} target="_blank" rel="noreferrer" className="dataset-card">
-                <div>
-                  <div className="dataset-name">{ds.name}</div>
-                  <div className="dataset-meta">{ds.size} · {ds.source}</div>
+            <div style={{fontSize:".75rem",color:"var(--muted)",marginBottom:12,fontFamily:"'JetBrains Mono',monospace"}}>↓ Click a dataset to see summary stats + class distribution</div>
+            {d.datasets.map(ds=>(
+              <div key={ds.name}>
+                <div
+                  className="dataset-card"
+                  style={{borderColor:selDs===ds.name?"var(--blue)":""}}
+                  onClick={()=>setSelDs(selDs===ds.name?null:ds.name)}
+                >
+                  <div>
+                    <div className="dataset-name">{ds.name}</div>
+                    <div className="dataset-meta">{ds.size} · {ds.source}</div>
+                  </div>
+                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                    <a href={ds.url} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{color:"var(--blue)",fontSize:".9rem",textDecoration:"none"}}>↗</a>
+                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:".65rem",color:"var(--muted)"}}>{selDs===ds.name?"▲":"▼"}</span>
+                  </div>
                 </div>
-                <span style={{color:"var(--blue)"}}>↗</span>
-              </a>
+                {selDs===ds.name && <DatasetPanel diseaseKey={sel} />}
+              </div>
             ))}
           </div>
 
           <div className="card">
             <div className="card-head">⚠️ ML Challenges</div>
-            {d.challenges.map((c,i) => (
-              <div key={i} className="challenge-item">
-                <div className="challenge-num">0{i+1}</div><div>{c}</div>
-              </div>
+            {d.challenges.map((c,i)=>(
+              <div key={i} className="challenge-item"><div className="challenge-num">0{i+1}</div><div>{c}</div></div>
             ))}
             <div className="stake-box">
               <div style={{fontSize:"1.1rem"}}>🚨</div>
@@ -715,7 +765,6 @@ function Explorer() {
   );
 }
 
-/* ─── METHODOLOGY ──────────────────────────────────────────────────────────── */
 function Methodology() {
   const [disease, setDisease] = useState("");
   const [dataType, setDataType] = useState("medical-images");
@@ -723,7 +772,6 @@ function Methodology() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-
   const EXAMPLES = ["Detect pneumonia from chest X-rays","Predict sepsis in ICU patients","Classify skin lesions","Predict 30-day hospital readmission","Detect depression from clinical notes"];
 
   async function generate() {
@@ -745,8 +793,8 @@ Return ONLY valid JSON (no markdown fences):
       <div className="card">
         <div className="card-head">⚗️ AI Methodology Generator</div>
         <div className="card-sub">Describe any medical AI problem — get a full research roadmap with model, datasets, and metrics.</div>
-        <div className="chips">{EXAMPLES.map(e => <div key={e} className={`chip ${disease===e?"active":""}`} onClick={()=>setDisease(e)}>{e}</div>)}</div>
-        <div className="field"><label>Disease / Problem</label><input placeholder="Describe your medical AI problem..." value={disease} onChange={e=>setDisease(e.target.value)} /></div>
+        <div className="chips">{EXAMPLES.map(e=><div key={e} className={`chip ${disease===e?"active":""}`} onClick={()=>setDisease(e)}>{e}</div>)}</div>
+        <div className="field"><label>Disease / Problem</label><input placeholder="Describe your medical AI problem..." value={disease} onChange={e=>setDisease(e.target.value)}/></div>
         <div className="form-row">
           <div className="field"><label>Data Type</label>
             <select value={dataType} onChange={e=>setDataType(e.target.value)}>
@@ -769,12 +817,10 @@ Return ONLY valid JSON (no markdown fences):
         </div>
         {err && <div style={{color:"var(--red)",fontSize:".8rem",marginBottom:12}}>{err}</div>}
         <button className="btn btn-green" onClick={generate} disabled={loading||!disease.trim()}>
-          {loading ? <><div className="spinner"/>Generating...</> : "Generate Methodology →"}
+          {loading?<><div className="spinner"/>Generating...</>:"Generate Methodology →"}
         </button>
       </div>
-
       {loading && <div className="card">{[100,70,85,50,90].map((w,i)=><div key={i} className="shimmer shimmer-line" style={{width:`${w}%`,animationDelay:`${i*.1}s`}}/>)}</div>}
-
       {result && !loading && (
         <div className="out-section">
           <div className="out-grid">
@@ -786,11 +832,11 @@ Return ONLY valid JSON (no markdown fences):
             </div>
             <div className="out-card">
               <div className="out-label">Datasets</div>
-              {[result.dataset, result.dataset2].filter(Boolean).map(ds=>(
+              {[result.dataset,result.dataset2].filter(Boolean).map(ds=>(
                 <div key={ds.name} style={{marginBottom:10}}>
                   <div style={{fontWeight:600,fontSize:".86rem",marginBottom:3}}>{ds.name}</div>
                   <div className="out-body" style={{fontSize:".75rem",marginBottom:4}}>{ds.size}{ds.note?` — ${ds.note}`:""}</div>
-                  {ds.url && ds.url !== "string" && <a href={ds.url} target="_blank" rel="noreferrer" className="out-link">Open Dataset ↗</a>}
+                  {ds.url&&ds.url!=="string"&&<a href={ds.url} target="_blank" rel="noreferrer" className="out-link">Open Dataset ↗</a>}
                 </div>
               ))}
             </div>
@@ -805,7 +851,7 @@ Return ONLY valid JSON (no markdown fences):
             <div className="out-card">
               <div className="out-label">Key Challenges</div>
               {result.challenges?.map((c,i)=><div key={i} className="challenge-item"><div className="challenge-num">0{i+1}</div><div style={{fontSize:".82rem"}}>{c}</div></div>)}
-              {result.clinicalStake && <div className="stake-box" style={{marginTop:12}}><div style={{fontSize:"1.1rem"}}>🚨</div><div className="stake-text">{result.clinicalStake}</div></div>}
+              {result.clinicalStake&&<div className="stake-box" style={{marginTop:12}}><div style={{fontSize:"1.1rem"}}>🚨</div><div className="stake-text">{result.clinicalStake}</div></div>}
             </div>
             <div className="out-card">
               <div className="out-label">Tips for {level==="beginner"?"Beginners":level==="intermediate"?"Intermediate Devs":"Advanced Researchers"}</div>
@@ -818,7 +864,6 @@ Return ONLY valid JSON (no markdown fences):
   );
 }
 
-/* ─── BLUEPRINT ────────────────────────────────────────────────────────────── */
 function Blueprint() {
   const [topic, setTopic] = useState("");
   const [purpose, setPurpose] = useState("science-fair");
@@ -826,7 +871,6 @@ function Blueprint() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [saved, setSaved] = useState(false);
-
   const EXAMPLES = ["AI for early Parkinson's detection using voice","Predicting sepsis risk from ICU vitals","Classifying diabetic retinopathy stages","Detecting rare diseases from facial photos"];
 
   async function generate() {
@@ -844,19 +888,20 @@ Return ONLY valid JSON (no markdown fences):
   }
 
   function save() {
-  if (!result) return;
-  try {
-    localStorage.setItem(`bp_${Date.now()}`, JSON.stringify({topic, purpose, result, date: new Date().toLocaleDateString()}));
-    setSaved(true);
-  } catch(e) { console.error(e); }
-}
+    if (!result) return;
+    try {
+      localStorage.setItem(`bp_${Date.now()}`, JSON.stringify({topic, purpose, result, date: new Date().toLocaleDateString()}));
+      setSaved(true);
+    } catch(e) { console.error(e); }
+  }
+
   return (
     <div>
       <div className="card">
         <div className="card-head">📐 Research Blueprint Generator</div>
         <div className="card-sub">Turn any AI healthcare idea into a complete research plan — question, hypothesis, datasets, timeline, and metrics.</div>
         <div className="chips">{EXAMPLES.map(e=><div key={e} className={`chip ${topic===e?"active":""}`} onClick={()=>setTopic(e)}>{e}</div>)}</div>
-        <div className="field"><label>Research Topic</label><input placeholder="Describe your AI healthcare research idea..." value={topic} onChange={e=>setTopic(e.target.value)} /></div>
+        <div className="field"><label>Research Topic</label><input placeholder="Describe your AI healthcare research idea..." value={topic} onChange={e=>setTopic(e.target.value)}/></div>
         <div className="form-row">
           <div className="field"><label>Purpose</label>
             <select value={purpose} onChange={e=>setPurpose(e.target.value)}>
@@ -870,12 +915,10 @@ Return ONLY valid JSON (no markdown fences):
         </div>
         {err && <div style={{color:"var(--red)",fontSize:".8rem",marginBottom:12}}>{err}</div>}
         <button className="btn btn-green" onClick={generate} disabled={loading||!topic.trim()}>
-          {loading ? <><div className="spinner"/>Generating...</> : "Generate Blueprint →"}
+          {loading?<><div className="spinner"/>Generating...</>:"Generate Blueprint →"}
         </button>
       </div>
-
       {loading && <div className="card">{[100,60,80,45,95,55].map((w,i)=><div key={i} className="shimmer shimmer-line" style={{width:`${w}%`,animationDelay:`${i*.1}s`}}/>)}</div>}
-
       {result && !loading && (
         <div className="out-section">
           <div className="card" style={{borderColor:"rgba(0,255,157,.3)",background:"rgba(0,255,157,.03)"}}>
@@ -904,7 +947,7 @@ Return ONLY valid JSON (no markdown fences):
                 <div key={ds.name} style={{marginBottom:10}}>
                   <div style={{fontWeight:600,fontSize:".84rem"}}>{ds.name}</div>
                   <div className="out-body" style={{fontSize:".74rem",marginBottom:4}}>{ds.size}</div>
-                  {ds.url && ds.url!=="string" && <a href={ds.url} target="_blank" rel="noreferrer" className="out-link">Open ↗</a>}
+                  {ds.url&&ds.url!=="string"&&<a href={ds.url} target="_blank" rel="noreferrer" className="out-link">Open ↗</a>}
                 </div>
               ))}
             </div>
@@ -936,28 +979,34 @@ Return ONLY valid JSON (no markdown fences):
   );
 }
 
-/* ─── SAVED ────────────────────────────────────────────────────────────────── */
 function Saved() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
 
-useEffect(() => {
-  try {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith("bp_"));
-    const loaded = keys.map(k => {
-      try { return {key: k, ...JSON.parse(localStorage.getItem(k))}; } catch { return null; }
-    }).filter(Boolean).reverse();
-    setItems(loaded);
-  } catch(e) { console.error(e); }
-  setLoading(false);
-}, []);
+  useEffect(()=>{
+    try {
+      const keys = Object.keys(localStorage).filter(k=>k.startsWith("bp_"));
+      const loaded = keys.map(k=>{
+        try { return {key:k,...JSON.parse(localStorage.getItem(k))}; } catch { return null; }
+      }).filter(Boolean).reverse();
+      setItems(loaded);
+    } catch(e) { console.error(e); }
+    setLoading(false);
+  },[]);
+
   function remove(key) {
-  try { localStorage.removeItem(key); setItems(items.filter(i=>i.key!==key)); } catch {}
-}
+    try { localStorage.removeItem(key); setItems(items.filter(i=>i.key!==key)); } catch {}
+  }
 
   if (loading) return <div className="card"><div className="shimmer shimmer-line" style={{width:"60%"}}/></div>;
-  if (!items.length) return <div className="card" style={{textAlign:"center",padding:48}}><div style={{fontSize:"2rem",marginBottom:12}}>📂</div><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:"1.2rem",fontWeight:700,marginBottom:8}}>No saved blueprints yet</div><div style={{color:"var(--muted)",fontSize:".85rem"}}>Generate a blueprint and hit Save.</div></div>;
+  if (!items.length) return (
+    <div className="card" style={{textAlign:"center",padding:48}}>
+      <div style={{fontSize:"2rem",marginBottom:12}}>📂</div>
+      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:"1.2rem",fontWeight:700,marginBottom:8}}>No saved blueprints yet</div>
+      <div style={{color:"var(--muted)",fontSize:".85rem"}}>Generate a blueprint and hit Save.</div>
+    </div>
+  );
 
   return (
     <div className="card">
@@ -975,7 +1024,7 @@ useEffect(() => {
               <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:".65rem"}} onClick={e=>{e.stopPropagation();remove(item.key);}}>Delete</button>
             </div>
           </div>
-          {expanded===item.key && item.result && (
+          {expanded===item.key&&item.result&&(
             <div className="card" style={{marginTop:4,marginBottom:4,borderColor:"rgba(0,255,157,.2)"}}>
               <div style={{fontSize:".85rem",color:"var(--muted)",marginBottom:10}}><strong style={{color:"var(--text)"}}>Q: </strong>{item.result.question}</div>
               <div style={{fontSize:".85rem",color:"var(--muted)",marginBottom:10}}><strong style={{color:"var(--text)"}}>H: </strong>{item.result.hypothesis}</div>
