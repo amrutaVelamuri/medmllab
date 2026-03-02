@@ -27,8 +27,10 @@ const DISEASES = {
     whyAI: "CNNs detect consolidations, infiltrates, and opacities indicating pneumonia. One model can process thousands of X-rays overnight, enabling mass screening at scale.",
     pipeline: ["DICOM X-Ray", "Normalize + Augment", "ResNet-50", "Sigmoid Layer", "Binary Output", "Clinical Alert"],
     datasets: [
-      { name: "NIH Chest X-ray14", url: "https://www.kaggle.com/datasets/nih-chest-xrays/data", size: "112,120 images", source: "NIH / Kaggle" },
-      { name: "CheXpert (Stanford)", url: "https://stanfordmlgroup.github.io/competitions/chexpert/", size: "224,316 images", source: "Stanford ML Group" }
+      { name: "NIH Chest X-ray14", url: "https://www.kaggle.com/datasets/nih-chest-xrays/data", size: "112,120 images", source: "NIH / Kaggle",
+        meta: { samples:"112,120", features:"1024×1024px grayscale images", task:"Multi-Label Classification (14 findings)", classes:[{label:"Normal",pct:62},{label:"Pneumonia",pct:16},{label:"Infiltration",pct:12},{label:"Other findings",pct:10}] }},
+      { name: "CheXpert (Stanford)", url: "https://stanfordmlgroup.github.io/competitions/chexpert/", size: "224,316 images", source: "Stanford ML Group",
+        meta: { samples:"224,316", features:"Frontal + lateral view X-rays", task:"Multi-Label Classification (14 labels)", classes:[{label:"No Finding",pct:55},{label:"Pleural Effusion",pct:28},{label:"Pneumonia",pct:10},{label:"Other",pct:7}] }}
     ],
     metrics: [
       { name: "Sensitivity (Recall)", val: "~92%", desc: "% of sick patients correctly flagged" },
@@ -45,8 +47,10 @@ const DISEASES = {
     whyAI: "Patient records contain dozens of correlated risk factors. Ensemble models excel at finding non-linear patterns across tabular features that simple risk scores miss.",
     pipeline: ["Patient EHR Data", "Impute + Encode", "Feature Scaling", "XGBoost / RF", "Risk Score (0-1)", "Care Team Alert"],
     datasets: [
-      { name: "Pima Indians Diabetes", url: "https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database", size: "768 records", source: "UCI ML Repository" },
-      { name: "CDC BRFSS Survey", url: "https://www.kaggle.com/datasets/cdc/behavioral-risk-factor-surveillance-system", size: "400k+ records", source: "CDC / Kaggle" }
+      { name: "Pima Indians Diabetes", url: "https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database", size: "768 records", source: "UCI ML Repository",
+        meta: { samples:"768", features:"8 clinical features (glucose, BMI, age...)", task:"Binary Classification", classes:[{label:"No Diabetes",pct:65},{label:"Diabetes",pct:35}] }},
+      { name: "CDC BRFSS Survey", url: "https://www.kaggle.com/datasets/cdc/behavioral-risk-factor-surveillance-system", size: "400k+ records", source: "CDC / Kaggle",
+        meta: { samples:"400,000+", features:"22 behavioral + health features", task:"Binary Classification", classes:[{label:"No Diabetes",pct:86},{label:"Diabetes",pct:14}] }}
     ],
     metrics: [
       { name: "Precision", val: "~81%", desc: "When it predicts diabetes, how often it's right" },
@@ -63,8 +67,10 @@ const DISEASES = {
     whyAI: "Subtle patterns of brain atrophy in specific regions are invisible to the naked eye but detectable by 3D CNNs trained on thousands of MRI volumes.",
     pipeline: ["3D MRI Volume", "Skull Strip + Normalize", "Voxel Resize", "3D ResNet / ViT", "4-Class Output", "Stage Report"],
     datasets: [
-      { name: "ADNI (Gold Standard)", url: "https://adni.loni.usc.edu/", size: "10k+ MRI scans", source: "ADNI Consortium" },
-      { name: "OASIS-3", url: "https://www.oasis-brains.org/", size: "2,842 sessions", source: "Washington University" }
+      { name: "ADNI (Gold Standard)", url: "https://adni.loni.usc.edu/", size: "10k+ MRI scans", source: "ADNI Consortium",
+        meta: { samples:"10,000+ scans", features:"3D T1-weighted MRI volumes", task:"4-Class Classification", classes:[{label:"CN (Normal)",pct:40},{label:"MCI",pct:35},{label:"AD",pct:20},{label:"Severe AD",pct:5}] }},
+      { name: "OASIS-3", url: "https://www.oasis-brains.org/", size: "2,842 sessions", source: "Washington University",
+        meta: { samples:"2,842 longitudinal sessions", features:"MRI + PET + cognitive tests", task:"Binary Classification (CDR staging)", classes:[{label:"CDR 0 (Normal)",pct:72},{label:"CDR > 0 (Impaired)",pct:28}] }}
     ],
     metrics: [
       { name: "Multi-class Accuracy", val: "~85%", desc: "Across 4 stages: CN, MCI, AD, Severe" },
@@ -81,8 +87,10 @@ const DISEASES = {
     whyAI: "EfficientNet fine-tuned on dermoscopy images achieves dermatologist-level performance, enabling expert-level screening via smartphone apps globally.",
     pipeline: ["Dermoscopy Image", "Hair Removal + Crop", "Color Normalization", "EfficientNet-B4", "7-Class Softmax", "Risk Level"],
     datasets: [
-      { name: "HAM10000", url: "https://www.kaggle.com/datasets/kmader/skin-lesion-analysis-toward-melanoma-detection", size: "10,015 images, 7 classes", source: "ISIC / Kaggle" },
-      { name: "ISIC 2020 Challenge", url: "https://www.kaggle.com/c/siim-isic-melanoma-classification", size: "33,126 images", source: "ISIC Archive" }
+      { name: "HAM10000", url: "https://www.kaggle.com/datasets/kmader/skin-lesion-analysis-toward-melanoma-detection", size: "10,015 images, 7 classes", source: "ISIC / Kaggle",
+        meta: { samples:"10,015", features:"600×450px dermoscopy images", task:"7-Class Classification", classes:[{label:"Melanocytic nevi",pct:67},{label:"Melanoma",pct:11},{label:"BCC",pct:5},{label:"Other 4 types",pct:17}] }},
+      { name: "ISIC 2020 Challenge", url: "https://www.kaggle.com/c/siim-isic-melanoma-classification", size: "33,126 images", source: "ISIC Archive",
+        meta: { samples:"33,126", features:"High-res dermoscopy + patient metadata", task:"Binary Classification (melanoma vs benign)", classes:[{label:"Benign",pct:98},{label:"Melanoma",pct:2}] }}
     ],
     metrics: [
       { name: "Top-1 Accuracy", val: "~89%", desc: "Correct class prediction across 7 types" },
@@ -99,8 +107,10 @@ const DISEASES = {
     whyAI: "Fundus cameras are cheap and widely available. AI grading removes the bottleneck of specialist ophthalmologists for mass screening.",
     pipeline: ["Fundus Photo", "CLAHE Enhancement", "Green Channel Extract", "EfficientNet", "5-Grade Output", "Specialist Referral"],
     datasets: [
-      { name: "EyePACS / Kaggle DR", url: "https://www.kaggle.com/c/diabetic-retinopathy-detection", size: "88,702 images", source: "EyePACS / Kaggle" },
-      { name: "IDRiD", url: "https://idrid.grand-challenge.org/", size: "516 images + lesion masks", source: "Grand Challenge" }
+      { name: "EyePACS / Kaggle DR", url: "https://www.kaggle.com/c/diabetic-retinopathy-detection", size: "88,702 images", source: "EyePACS / Kaggle",
+        meta: { samples:"88,702", features:"High-res fundus photographs", task:"5-Grade Ordinal Classification", classes:[{label:"Grade 0 (No DR)",pct:73},{label:"Grade 1 (Mild)",pct:7},{label:"Grade 2 (Moderate)",pct:15},{label:"Grade 3-4 (Severe+)",pct:5}] }},
+      { name: "IDRiD", url: "https://idrid.grand-challenge.org/", size: "516 images + lesion masks", source: "Grand Challenge",
+        meta: { samples:"516", features:"Fundus images + pixel-level lesion masks", task:"Grading + Lesion Segmentation", classes:[{label:"Grade 0-1",pct:25},{label:"Grade 2",pct:35},{label:"Grade 3",pct:25},{label:"Grade 4",pct:15}] }}
     ],
     metrics: [
       { name: "Quadratic Kappa", val: "~0.85", desc: "Competition standard — measures grade agreement" },
@@ -117,8 +127,10 @@ const DISEASES = {
     whyAI: "ICU patients generate thousands of data points per hour. LSTMs learn temporal patterns of deterioration invisible in static snapshots.",
     pipeline: ["ICU Vitals Stream", "Impute + Normalize", "Rolling Window (6hr)", "LSTM / Transformer", "Risk Score", "Bedside Alert"],
     datasets: [
-      { name: "PhysioNet Challenge 2019", url: "https://physionet.org/content/challenge-2019/1.0.0/", size: "40,336 ICU patients", source: "PhysioNet" },
-      { name: "MIMIC-III", url: "https://physionet.org/content/mimiciii/", size: "46k+ admissions", source: "MIT / PhysioNet" }
+      { name: "PhysioNet Challenge 2019", url: "https://physionet.org/content/challenge-2019/1.0.0/", size: "40,336 ICU patients", source: "PhysioNet",
+        meta: { samples:"40,336 patients", features:"40 clinical variables (hourly ICU)", task:"Binary + Early Warning (6hr horizon)", classes:[{label:"No Sepsis",pct:92},{label:"Sepsis",pct:8}] }},
+      { name: "MIMIC-III", url: "https://physionet.org/content/mimiciii/", size: "46k+ admissions", source: "MIT / PhysioNet",
+        meta: { samples:"46,520 admissions", features:"17 time-series vitals + 100+ static vars", task:"Binary Classification (Sepsis-3 definition)", classes:[{label:"No Sepsis",pct:94},{label:"Sepsis",pct:6}] }}
     ],
     metrics: [
       { name: "AUROC", val: "~0.85", desc: "Primary competition metric" },
@@ -135,8 +147,10 @@ const DISEASES = {
     whyAI: "WSIs contain billions of pixels — no human can manually inspect every cell. AI models identify mitotic figures, necrosis, and tumor patterns across entire slides.",
     pipeline: ["Whole Slide Image", "Tile Extraction (256x256)", "Stain Normalization", "ViT / CNN", "Grade + Subtype", "Pathologist Review"],
     datasets: [
-      { name: "TCGA (NCI)", url: "https://portal.gdc.cancer.gov/", size: "30k+ slides, 33 cancer types", source: "NCI GDC Portal" },
-      { name: "CAMELYON17", url: "https://camelyon17.grand-challenge.org/", size: "1,000 WSIs", source: "Grand Challenge" }
+      { name: "TCGA (NCI)", url: "https://portal.gdc.cancer.gov/", size: "30k+ slides, 33 cancer types", source: "NCI GDC Portal",
+        meta: { samples:"30,000+ WSIs", features:"Gigapixel H&E slides + genomics data", task:"33-Class Cancer Type Classification", classes:[{label:"Normal adjacent tissue",pct:40},{label:"Low grade tumor",pct:35},{label:"High grade tumor",pct:25}] }},
+      { name: "CAMELYON17", url: "https://camelyon17.grand-challenge.org/", size: "1,000 WSIs", source: "Grand Challenge",
+        meta: { samples:"1,000 lymph node WSIs", features:"Whole slide H&E stained images", task:"Binary + Patient-level Staging (pN0-pN2)", classes:[{label:"No Metastasis",pct:60},{label:"Metastasis Present",pct:40}] }}
     ],
     metrics: [
       { name: "Slide-level AUC", val: "~0.96", desc: "Distinguishing cancer vs. normal slides" },
@@ -153,8 +167,10 @@ const DISEASES = {
     whyAI: "Combining structured EHR data (labs, vitals, medications) with ECG signal features allows models to capture both chronic risk factors and acute deterioration signals.",
     pipeline: ["EHR + ECG Data", "Feature Engineering", "Temporal Aggregation", "Gradient Boosting", "30-day Readmission Risk", "Care Coordination"],
     datasets: [
-      { name: "Heart Failure Clinical Records", url: "https://www.kaggle.com/datasets/andrewmvd/heart-failure-clinical-data", size: "299 patients", source: "UCI / Kaggle" },
-      { name: "MIMIC-IV", url: "https://physionet.org/content/mimiciv/", size: "500k+ hospital stays", source: "MIT / PhysioNet" }
+      { name: "Heart Failure Clinical Records", url: "https://www.kaggle.com/datasets/andrewmvd/heart-failure-clinical-data", size: "299 patients", source: "UCI / Kaggle",
+        meta: { samples:"299 patients", features:"13 clinical features (EF, creatinine...)", task:"Binary Classification (survival prediction)", classes:[{label:"Survived",pct:68},{label:"Death Event",pct:32}] }},
+      { name: "MIMIC-IV", url: "https://physionet.org/content/mimiciv/", size: "500k+ hospital stays", source: "MIT / PhysioNet",
+        meta: { samples:"500,000+ hospital stays", features:"200+ EHR variables + ECG waveforms", task:"30-day Readmission Prediction", classes:[{label:"No Readmission",pct:81},{label:"Readmitted <30 days",pct:19}] }}
     ],
     metrics: [
       { name: "C-statistic (AUC)", val: "~0.82", desc: "Discrimination for readmission prediction" },
@@ -171,8 +187,10 @@ const DISEASES = {
     whyAI: "Ground-glass opacities and bilateral infiltrates in CT scans are distinctive COVID-19 signatures. AI detects these patterns faster than radiologists during surge conditions.",
     pipeline: ["CT / X-Ray", "Lung Segmentation", "ROI Extraction", "DenseNet-121", "COVID Probability", "Triage Decision"],
     datasets: [
-      { name: "COVID-19 Radiography DB", url: "https://www.kaggle.com/datasets/tawsifurrahman/covid19-radiography-database", size: "21,165 images", source: "Kaggle" },
-      { name: "SARS-CoV-2 CT Scan", url: "https://www.kaggle.com/datasets/plameneduardo/sarscov2-ctscan-dataset", size: "2,482 CT scans", source: "Kaggle" }
+      { name: "COVID-19 Radiography DB", url: "https://www.kaggle.com/datasets/tawsifurrahman/covid19-radiography-database", size: "21,165 images", source: "Kaggle",
+        meta: { samples:"21,165", features:"299×299px chest X-rays", task:"4-Class Classification", classes:[{label:"Normal",pct:47},{label:"COVID-19",pct:31},{label:"Viral Pneumonia",pct:14},{label:"Lung Opacity",pct:8}] }},
+      { name: "SARS-CoV-2 CT Scan", url: "https://www.kaggle.com/datasets/plameneduardo/sarscov2-ctscan-dataset", size: "2,482 CT scans", source: "Kaggle",
+        meta: { samples:"2,482 CT slices", features:"Axial chest CT scan slices", task:"Binary Classification (COVID vs non-COVID)", classes:[{label:"Non-COVID CT",pct:50},{label:"COVID-19 CT",pct:50}] }}
     ],
     metrics: [
       { name: "Sensitivity", val: "~94%", desc: "COVID positive cases caught" },
@@ -189,8 +207,10 @@ const DISEASES = {
     whyAI: "AI identifies penumbra regions (salvageable tissue), quantifies infarct volume, and classifies stroke type — all critical for tPA treatment decisions within the 4.5-hour window.",
     pipeline: ["CT / MRI Brain", "Skull Strip", "Atlas Registration", "U-Net Segmentation", "Infarct Volume", "tPA Decision Support"],
     datasets: [
-      { name: "ISLES 2022", url: "https://isles-22.grand-challenge.org/", size: "400 MRI cases", source: "Grand Challenge" },
-      { name: "PhysioNet MIMIC-III", url: "https://physionet.org/content/mimiciii/", size: "46k+ admissions", source: "PhysioNet" }
+      { name: "ISLES 2022", url: "https://isles-22.grand-challenge.org/", size: "400 MRI cases", source: "Grand Challenge",
+        meta: { samples:"400 MRI cases", features:"DWI + ADC + FLAIR MRI sequences", task:"Ischemic Lesion Segmentation + Volume", classes:[{label:"Ischemic stroke",pct:70},{label:"Hemorrhagic stroke",pct:30}] }},
+      { name: "PhysioNet MIMIC-III", url: "https://physionet.org/content/mimiciii/", size: "46k+ admissions", source: "PhysioNet",
+        meta: { samples:"46,520 admissions", features:"Clinical variables + ICD-9 codes", task:"Binary Classification (stroke diagnosis)", classes:[{label:"No Stroke Admission",pct:95},{label:"Stroke Admission",pct:5}] }}
     ],
     metrics: [
       { name: "Dice Score (lesion)", val: "~0.78", desc: "Overlap between predicted and true lesion" },
@@ -207,8 +227,10 @@ const DISEASES = {
     whyAI: "3D CNNs analyze full CT volumes to detect, measure, and classify pulmonary nodules — a task requiring expert radiologists to manually scroll through hundreds of slices.",
     pipeline: ["Low-dose CT", "Lung Segmentation", "Nodule Candidate Detection", "False Positive Reduction CNN", "Malignancy Score", "Follow-up Protocol"],
     datasets: [
-      { name: "LUNA16", url: "https://luna16.grand-challenge.org/", size: "888 CTs, 36k nodule annotations", source: "Grand Challenge" },
-      { name: "NLST", url: "https://cdas.cancer.gov/nlst/", size: "26,722 participants", source: "National Cancer Institute" }
+      { name: "LUNA16", url: "https://luna16.grand-challenge.org/", size: "888 CTs, 36k nodule annotations", source: "Grand Challenge",
+        meta: { samples:"888 LDCT scans", features:"3D volumes + nodule coordinates + diameter", task:"Nodule Detection + False Positive Reduction", classes:[{label:"Benign Nodule",pct:75},{label:"Malignant Nodule",pct:25}] }},
+      { name: "NLST", url: "https://cdas.cancer.gov/nlst/", size: "26,722 participants", source: "National Cancer Institute",
+        meta: { samples:"26,722 participants (3 annual CTs)", features:"LDCT volumes + clinical risk factors", task:"Cancer Risk Prediction (6-year horizon)", classes:[{label:"No Cancer Detected",pct:93},{label:"Lung Cancer Diagnosed",pct:7}] }}
     ],
     metrics: [
       { name: "CPM Score (FROC)", val: "~0.90", desc: "Competition standard — sensitivity at multiple FP rates" },
@@ -225,8 +247,10 @@ const DISEASES = {
     whyAI: "Language patterns — word choice, syntactic complexity, first-person pronoun use — are measurable biomarkers of depression detected by transformer models.",
     pipeline: ["Clinical Notes / Speech", "Tokenization + Preprocessing", "BERT Fine-tuning", "Risk Classification", "PHQ-9 Score Estimate", "Care Navigator Alert"],
     datasets: [
-      { name: "CLPsych 2015 (Twitter)", url: "https://clpsych.org/shared-task-2015/", size: "1,746 users", source: "CLPsych Workshop" },
-      { name: "DAIC-WOZ Interview", url: "https://dcapswoz.ict.usc.edu/", size: "189 interview sessions", source: "USC ICT" }
+      { name: "CLPsych 2015 (Twitter)", url: "https://clpsych.org/shared-task-2015/", size: "1,746 users", source: "CLPsych Workshop",
+        meta: { samples:"1,746 user timelines", features:"Text posts + posting frequency patterns", task:"Binary Classification (depression screening)", classes:[{label:"Control",pct:70},{label:"Depression",pct:30}] }},
+      { name: "DAIC-WOZ Interview", url: "https://dcapswoz.ict.usc.edu/", size: "189 interview sessions", source: "USC ICT",
+        meta: { samples:"189 clinical interviews", features:"Audio + video + transcripts (multimodal)", task:"PHQ-8 Regression + Binary Classification", classes:[{label:"Not Depressed (PHQ<10)",pct:79},{label:"Depressed (PHQ≥10)",pct:21}] }}
     ],
     metrics: [
       { name: "F1 (depressed class)", val: "~0.73", desc: "Detecting positive cases" },
@@ -243,8 +267,10 @@ const DISEASES = {
     whyAI: "Deep learning models identify subtle microcalcifications and mass characteristics that predict malignancy, providing radiologists a reliable second opinion.",
     pipeline: ["Mammogram / Biopsy Slide", "Preprocessing + CLAHE", "Patch Extraction", "DenseNet / Attention CNN", "BI-RADS Category", "Radiologist Review"],
     datasets: [
-      { name: "CBIS-DDSM", url: "https://www.kaggle.com/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset", size: "10,239 mammograms", source: "Kaggle" },
-      { name: "VinDr-Mammo", url: "https://vindr.ai/datasets/mammo", size: "20,000 exams", source: "VinDr" }
+      { name: "CBIS-DDSM", url: "https://www.kaggle.com/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset", size: "10,239 mammograms", source: "Kaggle",
+        meta: { samples:"10,239 mammograms", features:"ROI patches + segmentation masks", task:"Binary Classification (malignant vs benign)", classes:[{label:"Benign",pct:60},{label:"Malignant",pct:40}] }},
+      { name: "VinDr-Mammo", url: "https://vindr.ai/datasets/mammo", size: "20,000 exams", source: "VinDr",
+        meta: { samples:"20,000 full exams", features:"4-view mammograms per patient", task:"BI-RADS Grading (5 assessment levels)", classes:[{label:"BI-RADS 1-2 (Normal)",pct:80},{label:"BI-RADS 3 (Probably Benign)",pct:13},{label:"BI-RADS 4-5 (Suspicious)",pct:7}] }}
     ],
     metrics: [
       { name: "AUC (malignancy)", val: "~0.94", desc: "Overall cancer detection performance" },
@@ -261,8 +287,10 @@ const DISEASES = {
     whyAI: "Parkinson's causes measurable changes in voice (jitter, shimmer, HNR), handwriting, and gait that are too subtle for clinical assessment but detectable by ML.",
     pipeline: ["Voice / Gait Recording", "Feature Extraction (MFCC, jitter)", "Normalization", "SVM / LSTM", "Parkinson's Probability", "Neurologist Alert"],
     datasets: [
-      { name: "UCI Parkinson's Dataset", url: "https://www.kaggle.com/datasets/vikasukani/parkinsons-disease-data-set", size: "195 voice recordings", source: "UCI / Kaggle" },
-      { name: "mPower (Research Kit)", url: "https://www.synapse.org/#!Synapse:syn4993293", size: "10k+ participants", source: "Sage Bionetworks" }
+      { name: "UCI Parkinson's Dataset", url: "https://www.kaggle.com/datasets/vikasukani/parkinsons-disease-data-set", size: "195 voice recordings", source: "UCI / Kaggle",
+        meta: { samples:"195 voice recordings", features:"22 acoustic features (jitter, shimmer, HNR)", task:"Binary Classification", classes:[{label:"Healthy",pct:25},{label:"Parkinson's",pct:75}] }},
+      { name: "mPower (Research Kit)", url: "https://www.synapse.org/#!Synapse:syn4993293", size: "10k+ participants", source: "Sage Bionetworks",
+        meta: { samples:"10,000+ participants", features:"Accelerometer + voice + finger tapping", task:"Binary Classification (remote monitoring)", classes:[{label:"Control",pct:60},{label:"Parkinson's",pct:40}] }}
     ],
     metrics: [
       { name: "Classification Accuracy", val: "~93%", desc: "Parkinson's vs. healthy controls" },
@@ -279,8 +307,10 @@ const DISEASES = {
     whyAI: "CKD progression is encoded in longitudinal patterns of creatinine, eGFR, and protein in urine. ML captures non-linear interactions across lab values over time.",
     pipeline: ["Lab Values (creatinine, eGFR)", "Time-series Aggregation", "Feature Engineering", "XGBoost", "CKD Stage + Progression Risk", "Nephrology Referral"],
     datasets: [
-      { name: "CKD Dataset (UCI)", url: "https://www.kaggle.com/datasets/mansoordaku/ckdisease", size: "400 patients, 24 features", source: "UCI / Kaggle" },
-      { name: "NHANES", url: "https://www.cdc.gov/nchs/nhanes/", size: "100k+ participants", source: "CDC NHANES" }
+      { name: "CKD Dataset (UCI)", url: "https://www.kaggle.com/datasets/mansoordaku/ckdisease", size: "400 patients, 24 features", source: "UCI / Kaggle",
+        meta: { samples:"400 patients", features:"24 lab + clinical features", task:"Binary Classification (CKD vs non-CKD)", classes:[{label:"No CKD",pct:50},{label:"CKD",pct:50}] }},
+      { name: "NHANES", url: "https://www.cdc.gov/nchs/nhanes/", size: "100k+ participants", source: "CDC NHANES",
+        meta: { samples:"100,000+ participants", features:"80+ lab + lifestyle + dietary variables", task:"Binary + CKD Stage Prediction", classes:[{label:"No CKD (eGFR≥60)",pct:90},{label:"CKD (eGFR<60)",pct:10}] }}
     ],
     metrics: [
       { name: "AUC-ROC", val: "~0.97", desc: "CKD vs. non-CKD discrimination" },
@@ -297,8 +327,10 @@ const DISEASES = {
     whyAI: "GNNs represent molecules as graphs (atoms = nodes, bonds = edges) and learn property predictions directly from chemical structure, replacing expensive wet lab assays.",
     pipeline: ["SMILES String", "Molecular Graph Construction", "Atom Feature Encoding", "GNN (Message Passing)", "Property Prediction", "Virtual Screening"],
     datasets: [
-      { name: "MoleculeNet", url: "http://moleculenet.org/", size: "700k+ compounds, 17 tasks", source: "Stanford / DeepChem" },
-      { name: "ChEMBL", url: "https://www.ebi.ac.uk/chembl/", size: "2.3M compounds", source: "EMBL-EBI" }
+      { name: "MoleculeNet", url: "http://moleculenet.org/", size: "700k+ compounds, 17 tasks", source: "Stanford / DeepChem",
+        meta: { samples:"700,000+ compounds", features:"Molecular graph (atoms + bonds + charges)", task:"Multi-Task: Property Regression + Classification", classes:[{label:"Inactive compound",pct:85},{label:"Active compound",pct:15}] }},
+      { name: "ChEMBL", url: "https://www.ebi.ac.uk/chembl/", size: "2.3M compounds", source: "EMBL-EBI",
+        meta: { samples:"2,300,000 compounds", features:"SMILES + bioassay activity data", task:"Bioactivity Regression + Classification", classes:[{label:"Inactive (IC50>10μM)",pct:90},{label:"Active (IC50<1μM)",pct:10}] }}
     ],
     metrics: [
       { name: "AUC (bioactivity)", val: "~0.86", desc: "Active vs. inactive compound classification" },
@@ -315,8 +347,10 @@ const DISEASES = {
     whyAI: "Longitudinal ICU data (hourly vitals, daily labs, nursing notes) contains temporal patterns of deterioration that static severity scores fundamentally miss.",
     pipeline: ["ICU Vitals + Labs", "Irregular Sampling Imputation", "Temporal Feature Extraction", "LSTM / Transformer", "48hr Mortality Risk", "ICU Team Decision Support"],
     datasets: [
-      { name: "MIMIC-III Benchmarks", url: "https://github.com/YerevaNN/mimic3-benchmarks", size: "33,798 ICU stays", source: "YerevaNN / PhysioNet" },
-      { name: "eICU Collaborative", url: "https://eicu-crd.mit.edu/", size: "200k+ ICU stays", source: "MIT / PhysioNet" }
+      { name: "MIMIC-III Benchmarks", url: "https://github.com/YerevaNN/mimic3-benchmarks", size: "33,798 ICU stays", source: "YerevaNN / PhysioNet",
+        meta: { samples:"33,798 ICU stays", features:"17 time-series clinical variables (hourly)", task:"Binary Classification (in-hospital mortality)", classes:[{label:"Survived",pct:86},{label:"Died in Hospital",pct:14}] }},
+      { name: "eICU Collaborative", url: "https://eicu-crd.mit.edu/", size: "200k+ ICU stays", source: "MIT / PhysioNet",
+        meta: { samples:"200,859 ICU stays", features:"200+ variables from 335 US hospitals", task:"Binary Classification + LOS Regression", classes:[{label:"Survived",pct:91},{label:"Died in Hospital",pct:9}] }}
     ],
     metrics: [
       { name: "AUC-ROC", val: "~0.87", desc: "vs. APACHE IV baseline of ~0.81" },
@@ -333,8 +367,10 @@ const DISEASES = {
     whyAI: "U-Net architectures with skip connections preserve spatial resolution, enabling precise pixel-level organ boundaries essential for radiation oncology treatment planning.",
     pipeline: ["CT / MRI Volume", "Intensity Normalization", "Patch Sampling", "U-Net / nnU-Net", "Voxel-level Mask", "Surgical / RT Planning"],
     datasets: [
-      { name: "Medical Segmentation Decathlon", url: "http://medicaldecathlon.com/", size: "10 tasks, 2,000+ cases", source: "Decathlon Challenge" },
-      { name: "CHAOS Challenge", url: "https://chaos.grand-challenge.org/", size: "40 CT + 120 MRI cases", source: "Grand Challenge" }
+      { name: "Medical Segmentation Decathlon", url: "http://medicaldecathlon.com/", size: "10 tasks, 2,000+ cases", source: "Decathlon Challenge",
+        meta: { samples:"2,000+ cases across 10 organ tasks", features:"CT + MRI volumes (multi-modal)", task:"Multi-Organ Semantic Segmentation", classes:[{label:"Background",pct:80},{label:"Target Organ/Tumor",pct:20}] }},
+      { name: "CHAOS Challenge", url: "https://chaos.grand-challenge.org/", size: "40 CT + 120 MRI cases", source: "Grand Challenge",
+        meta: { samples:"160 abdominal imaging scans", features:"CT + T1-in/T1-out/T2 MRI sequences", task:"4-Organ Segmentation (liver, kidneys, spleen)", classes:[{label:"Background",pct:78},{label:"Liver",pct:12},{label:"Spleen",pct:4},{label:"Kidneys",pct:6}] }}
     ],
     metrics: [
       { name: "Dice Score", val: "~0.95 (liver)", desc: "Overlap between predicted and true mask" },
@@ -351,8 +387,10 @@ const DISEASES = {
     whyAI: "The human genome has 3 billion base pairs — too large for manual analysis. CNNs and transformers learn sequence motifs and regulatory patterns that predict functional impact of variants.",
     pipeline: ["DNA Sequence / VCF", "One-hot Encoding / Embeddings", "Variant Filtering", "CNN / Transformer", "Pathogenicity Score", "Clinical Genetics Report"],
     datasets: [
-      { name: "ClinVar", url: "https://www.ncbi.nlm.nih.gov/clinvar/", size: "1M+ variant classifications", source: "NCBI" },
-      { name: "TCGA Genomics", url: "https://portal.gdc.cancer.gov/", size: "33 cancer types, 20k patients", source: "NCI GDC" }
+      { name: "ClinVar", url: "https://www.ncbi.nlm.nih.gov/clinvar/", size: "1M+ variant classifications", source: "NCBI",
+        meta: { samples:"1,000,000+ genetic variants", features:"DNA sequence context + functional annotations", task:"Binary Classification (pathogenicity)", classes:[{label:"Benign / Likely Benign",pct:88},{label:"Pathogenic / Likely Path.",pct:12}] }},
+      { name: "TCGA Genomics", url: "https://portal.gdc.cancer.gov/", size: "33 cancer types, 20k patients", source: "NCI GDC",
+        meta: { samples:"20,000+ tumor samples", features:"RNA-seq + somatic mutations + CNV", task:"33-Class Cancer Subtype Classification", classes:[{label:"BRCA (breast, most common)",pct:15},{label:"LUAD (lung adeno)",pct:10},{label:"Other 31 types",pct:75}] }}
     ],
     metrics: [
       { name: "Pathogenicity AUC", val: "~0.91", desc: "Benign vs. pathogenic variant classification" },
@@ -369,8 +407,10 @@ const DISEASES = {
     whyAI: "Wound size, tissue type (granulation, slough, necrosis), and moisture are objectively quantifiable from images — enabling remote monitoring without specialist visits.",
     pipeline: ["Wound Photo (smartphone)", "Background Removal", "Color Calibration", "MobileNet", "Tissue Classification + Area", "Care Plan Recommendation"],
     datasets: [
-      { name: "Medetec Wound DB", url: "https://www.medetec.co.uk/files/medetec-image-databases.html", size: "1,000+ wound images", source: "Medetec" },
-      { name: "AZH Wound Dataset", url: "https://github.com/uwm-bigdata/wound-classification", size: "350 annotated images", source: "UWM" }
+      { name: "Medetec Wound DB", url: "https://www.medetec.co.uk/files/medetec-image-databases.html", size: "1,000+ wound images", source: "Medetec",
+        meta: { samples:"1,000+ images", features:"RGB wound photographs (varied conditions)", task:"Multi-Class Tissue Classification", classes:[{label:"Granulation tissue",pct:45},{label:"Slough",pct:35},{label:"Necrosis",pct:20}] }},
+      { name: "AZH Wound Dataset", url: "https://github.com/uwm-bigdata/wound-classification", size: "350 annotated images", source: "UWM",
+        meta: { samples:"350 annotated wound images", features:"RGB + wound area pixel measurements", task:"Multi-Class + Wound Area Regression", classes:[{label:"Granulation tissue",pct:50},{label:"Slough",pct:30},{label:"Necrosis",pct:20}] }}
     ],
     metrics: [
       { name: "Tissue Classification F1", val: "~0.82", desc: "Granulation / slough / necrosis accuracy" },
@@ -387,8 +427,10 @@ const DISEASES = {
     whyAI: "BioBERT and ClinicalBERT pre-trained on biomedical literature and clinical notes perform named entity recognition, relation extraction, and phenotyping at scale.",
     pipeline: ["Clinical Note (raw text)", "De-identification", "Tokenization (WordPiece)", "ClinicalBERT Fine-tuning", "Named Entity Tags", "Structured EHR Update"],
     datasets: [
-      { name: "MIMIC-III Clinical Notes", url: "https://physionet.org/content/mimiciii/", size: "2M+ clinical notes", source: "MIT / PhysioNet" },
-      { name: "i2b2 NLP Challenges", url: "https://www.i2b2.org/NLP/DataSets/", size: "Multiple shared tasks", source: "i2b2 / Harvard" }
+      { name: "MIMIC-III Clinical Notes", url: "https://physionet.org/content/mimiciii/", size: "2M+ clinical notes", source: "MIT / PhysioNet",
+        meta: { samples:"2,000,000+ clinical documents", features:"Free-text discharge summaries, radiology, ECG reports", task:"NER + Relation Extraction + Phenotyping", classes:[{label:"Condition Absent/Negated",pct:72},{label:"Condition Present",pct:28}] }},
+      { name: "i2b2 NLP Challenges", url: "https://www.i2b2.org/NLP/DataSets/", size: "Multiple shared tasks", source: "i2b2 / Harvard",
+        meta: { samples:"1,000s of annotated clinical notes", features:"De-identified inpatient clinical text", task:"NER (medications, problems, lab tests)", classes:[{label:"Non-entity tokens",pct:85},{label:"Named clinical entities",pct:15}] }}
     ],
     metrics: [
       { name: "NER F1", val: "~0.88", desc: "Named entity recognition (disorders, drugs)" },
@@ -405,8 +447,10 @@ const DISEASES = {
     whyAI: "Facial action coding system (FACS) features extracted by CNNs from video frames, combined with LSTM temporal modeling, predict pain intensity scores non-invasively.",
     pipeline: ["Face Video / EEG", "Face Detection + Alignment", "Action Unit Extraction", "CNN + LSTM", "Pain Intensity Score (0-10)", "Medication Alert"],
     datasets: [
-      { name: "UNBC-McMaster Shoulder Pain", url: "https://www.pitt.edu/~jeffcohn/UNBC-McMaster.htm", size: "200 video sequences", source: "Pitt / UBC" },
-      { name: "BioVid Heat Pain DB", url: "https://www.nit.ovgu.de/nit_media/Forschung/Datenbanken/BioVid_Heat_Pain_Database-p-12.html", size: "87 subjects", source: "Univ. Magdeburg" }
+      { name: "UNBC-McMaster Shoulder Pain", url: "https://www.pitt.edu/~jeffcohn/UNBC-McMaster.htm", size: "200 video sequences", source: "Pitt / UBC",
+        meta: { samples:"200 video sequences", features:"Facial video + FACS action unit labels", task:"Pain Intensity Regression (PSPI 0-16 scale)", classes:[{label:"No/Minimal Pain (0-2)",pct:40},{label:"Mild Pain (3-6)",pct:35},{label:"Severe Pain (7+)",pct:25}] }},
+      { name: "BioVid Heat Pain DB", url: "https://www.nit.ovgu.de/nit_media/Forschung/Datenbanken/BioVid_Heat_Pain_Database-p-12.html", size: "87 subjects", source: "Univ. Magdeburg",
+        meta: { samples:"87 subjects (controlled heat stimuli)", features:"Video + EEG + ECG + skin conductance", task:"Pain Level Regression (4 stimulation levels)", classes:[{label:"Baseline (no pain)",pct:50},{label:"Low-intensity stimulation",pct:30},{label:"High-intensity stimulation",pct:20}] }}
     ],
     metrics: [
       { name: "ICC (intensity)", val: "~0.71", desc: "Inter-rater correlation for pain scoring" },
@@ -423,8 +467,10 @@ const DISEASES = {
     whyAI: "Siamese networks and zero-shot learning handle the extreme class imbalance of rare diseases. Facial analysis AI (Face2Gene) classifies hundreds of syndromes from clinical photos.",
     pipeline: ["Patient Photos + Labs + HPO Terms", "Phenotype Embedding", "Siamese / Zero-shot Network", "Syndrome Similarity Ranking", "Top-K Differential", "Geneticist Review"],
     datasets: [
-      { name: "Orphanet", url: "https://www.orpha.net/", size: "6,000+ rare diseases", source: "INSERM / EU" },
-      { name: "GestaltMatcher DB", url: "https://gestaltmatcher.org/", size: "10k+ patient images", source: "Univ. Bonn" }
+      { name: "Orphanet", url: "https://www.orpha.net/", size: "6,000+ rare diseases", source: "INSERM / EU",
+        meta: { samples:"6,000+ disease entries", features:"Clinical descriptions + gene-disease links", task:"Multi-Class Knowledge Graph Classification", classes:[{label:"Ultra-rare (<1 per million)",pct:65},{label:"Very rare (1-9 per million)",pct:20},{label:"Rare (1-5 per 10,000)",pct:15}] }},
+      { name: "GestaltMatcher DB", url: "https://gestaltmatcher.org/", size: "10k+ patient images", source: "Univ. Bonn",
+        meta: { samples:"10,000+ patient facial images", features:"Facial photographs + HPO phenotype terms", task:"Multi-Class (1,000+ distinct syndromes)", classes:[{label:"Most common syndrome (5%)",pct:5},{label:"2nd most common (4%)",pct:4},{label:"All other syndromes",pct:91}] }}
     ],
     metrics: [
       { name: "Top-1 Accuracy", val: "~35%", desc: "Correct syndrome as first prediction" },
@@ -441,8 +487,10 @@ const DISEASES = {
     whyAI: "CNNs detect tools and anatomy in video frames; temporal models recognize the sequence of surgical phases. This enables automated skill assessment and real-time guidance.",
     pipeline: ["Endoscopic Video", "Frame Extraction", "Tool + Tissue Detection", "Temporal CNN / Transformer", "Phase Recognition + Skill Score", "Surgeon Feedback"],
     datasets: [
-      { name: "Cholec80", url: "https://camma.unistra.fr/datasets/", size: "80 cholecystectomy videos", source: "IHU Strasbourg" },
-      { name: "CholecT50", url: "https://github.com/CAMMA-public/cholect50", size: "50 videos + triplet labels", source: "IHU Strasbourg" }
+      { name: "Cholec80", url: "https://camma.unistra.fr/datasets/", size: "80 cholecystectomy videos", source: "IHU Strasbourg",
+        meta: { samples:"80 full surgical videos (17+ hours)", features:"25fps endoscopic frames + tool presence labels", task:"7-Phase Recognition + Tool Detection", classes:[{label:"Phases 1-3 (prep/calot)",pct:40},{label:"Phases 4-5 (dissection)",pct:35},{label:"Phases 6-7 (extraction)",pct:25}] }},
+      { name: "CholecT50", url: "https://github.com/CAMMA-public/cholect50", size: "50 videos + triplet labels", source: "IHU Strasbourg",
+        meta: { samples:"50 videos with dense per-frame annotation", features:"Instrument-verb-target action triplets", task:"Surgical Action Triplet Recognition", classes:[{label:"No active action triplet",pct:65},{label:"Active surgical action",pct:35}] }}
     ],
     metrics: [
       { name: "Phase Recognition Acc", val: "~92%", desc: "Correct surgical phase classification" },
@@ -452,34 +500,6 @@ const DISEASES = {
     challenges: ["Smoke, blood, and occlusion severely degrade video quality during critical moments", "Surgical variation between surgeons — same phase looks very different", "High stakes deployment — model errors during live surgery are unacceptable"],
     clinicalStake: "Undetected intraoperative errors (bile duct injury, vascular damage) that AI could have flagged lead to life-threatening complications and repeat surgeries."
   }
-};
-
-/* ─── DATASET METADATA ───────────────────────────────────────────────────── */
-const DATASET_META = {
-  pneumonia:    { samples:"112,120", features:"1024x1024px images", task:"Binary Classification", classes:[{label:"Normal",pct:62},{label:"Pneumonia",pct:38}] },
-  diabetes:     { samples:"768", features:"8 clinical features", task:"Binary Classification", classes:[{label:"No Diabetes",pct:65},{label:"Diabetes",pct:35}] },
-  alzheimers:   { samples:"10,000+", features:"3D MRI volumes", task:"4-Class Classification", classes:[{label:"CN",pct:40},{label:"MCI",pct:35},{label:"AD",pct:20},{label:"Severe",pct:5}] },
-  skincancer:   { samples:"10,015", features:"600x450px images", task:"7-Class Classification", classes:[{label:"Melanocytic nevi",pct:67},{label:"Melanoma",pct:11},{label:"BCC",pct:5},{label:"Other",pct:17}] },
-  retinopathy:  { samples:"88,702", features:"Fundus images", task:"5-Grade Ordinal", classes:[{label:"Grade 0",pct:73},{label:"Grade 1",pct:7},{label:"Grade 2",pct:15},{label:"Grade 3",pct:2},{label:"Grade 4",pct:3}] },
-  sepsis:       { samples:"40,336", features:"40 clinical variables", task:"Binary + Time-Series", classes:[{label:"No Sepsis",pct:92},{label:"Sepsis",pct:8}] },
-  cancer_pathology: { samples:"30,000+", features:"Gigapixel WSI tiles", task:"Multi-Class", classes:[{label:"Normal",pct:40},{label:"Low Grade",pct:35},{label:"High Grade",pct:25}] },
-  heart_failure: { samples:"299", features:"13 clinical features", task:"Binary Classification", classes:[{label:"Survived",pct:68},{label:"Death Event",pct:32}] },
-  covid:        { samples:"21,165", features:"299x299px images", task:"3-Class Classification", classes:[{label:"Normal",pct:47},{label:"COVID",pct:31},{label:"Viral Pneumonia",pct:22}] },
-  stroke:       { samples:"400", features:"3D MRI volumes", task:"Segmentation + Classification", classes:[{label:"Ischemic",pct:70},{label:"Hemorrhagic",pct:30}] },
-  lung_cancer:  { samples:"888 CTs", features:"3D volumes + nodule coords", task:"Detection + Malignancy", classes:[{label:"Benign Nodule",pct:75},{label:"Malignant",pct:25}] },
-  mental_health:{ samples:"1,746", features:"Text + audio features", task:"Binary Classification", classes:[{label:"Control",pct:70},{label:"Depression",pct:30}] },
-  breast_cancer:{ samples:"10,239", features:"Mammogram images", task:"Binary + BI-RADS Grade", classes:[{label:"Benign",pct:60},{label:"Malignant",pct:40}] },
-  parkinson:    { samples:"195", features:"22 voice features", task:"Binary Classification", classes:[{label:"Healthy",pct:25},{label:"Parkinson's",pct:75}] },
-  kidney_disease:{ samples:"400", features:"24 lab features", task:"Binary Classification", classes:[{label:"No CKD",pct:50},{label:"CKD",pct:50}] },
-  drug_discovery:{ samples:"700,000+", features:"Molecular graph", task:"Property Regression + Classification", classes:[{label:"Inactive",pct:85},{label:"Active",pct:15}] },
-  icu_mortality: { samples:"33,798", features:"17 time-series variables", task:"Binary Classification", classes:[{label:"Survived",pct:86},{label:"Died",pct:14}] },
-  medical_imaging_segmentation:{ samples:"2,000+", features:"CT/MRI volumes", task:"Semantic Segmentation", classes:[{label:"Background",pct:80},{label:"Organ",pct:20}] },
-  genomics:     { samples:"1,000,000+", features:"DNA sequence variants", task:"Binary Classification", classes:[{label:"Benign",pct:88},{label:"Pathogenic",pct:12}] },
-  wound_care:   { samples:"1,000+", features:"RGB images", task:"Multi-Class", classes:[{label:"Granulation",pct:45},{label:"Slough",pct:35},{label:"Necrosis",pct:20}] },
-  ehr_nlp:      { samples:"2,000,000+", features:"Clinical text", task:"NER + Relation Extraction", classes:[{label:"Negative",pct:72},{label:"Positive",pct:28}] },
-  pain_assessment:{ samples:"200", features:"Video + EEG signals", task:"Regression (0-10)", classes:[{label:"No Pain",pct:40},{label:"Mild",pct:35},{label:"Severe",pct:25}] },
-  rare_disease: { samples:"10,000+", features:"Facial images + HPO terms", task:"Multi-Class (1000+ classes)", classes:[{label:"Syndrome A",pct:5},{label:"Syndrome B",pct:4},{label:"Others",pct:91}] },
-  surgical_ai:  { samples:"80 videos", features:"Video frames (25fps)", task:"Phase Recognition + Detection", classes:[{label:"Phase 1-3",pct:45},{label:"Phase 4-6",pct:35},{label:"Phase 7",pct:20}] },
 };
 
 const ALL_TAGS = ["all","imaging","tabular","NLP","time-series","genomics","3D","multimodal","oncology","neurology","cardiology","ICU"];
@@ -593,7 +613,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .ds-meta-val{font-size:.85rem;font-weight:500;color:var(--text);}
 .dist-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
 .dist-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-.dist-name{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text);min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dist-name{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text);min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dist-bar-wrap{flex:1;background:var(--s3);border-radius:4px;height:8px;overflow:hidden;}
 .dist-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .6s ease;}
 .dist-pct{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--green);min-width:32px;text-align:right;}
@@ -628,12 +648,12 @@ export default function App() {
   );
 }
 
-function DatasetPanel({ diseaseKey }) {
-  const meta = DATASET_META[diseaseKey];
+function DatasetPanel({ ds }) {
+  const meta = ds?.meta;
   if (!meta) return null;
   return (
     <div className="ds-panel">
-      <div className="ds-panel-title">📊 Dataset Summary</div>
+      <div className="ds-panel-title">📊 {ds.name}</div>
       <div className="ds-meta-grid">
         <div className="ds-meta-item"><div className="ds-meta-label">Samples</div><div className="ds-meta-val">{meta.samples}</div></div>
         <div className="ds-meta-item"><div className="ds-meta-label">Features</div><div className="ds-meta-val">{meta.features}</div></div>
@@ -727,7 +747,7 @@ function Explorer() {
 
           <div className="card">
             <div className="card-head">📦 Public Datasets</div>
-            <div style={{fontSize:".75rem",color:"var(--muted)",marginBottom:12,fontFamily:"'JetBrains Mono',monospace"}}>↓ Click a dataset to see summary stats + class distribution</div>
+            <div style={{fontSize:".75rem",color:"var(--muted)",marginBottom:12,fontFamily:"'JetBrains Mono',monospace"}}>↓ Click a dataset to see its unique stats + class distribution</div>
             {d.datasets.map(ds=>(
               <div key={ds.name}>
                 <div
@@ -744,7 +764,7 @@ function Explorer() {
                     <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:".65rem",color:"var(--muted)"}}>{selDs===ds.name?"▲":"▼"}</span>
                   </div>
                 </div>
-                {selDs===ds.name && <DatasetPanel diseaseKey={sel} />}
+                {selDs===ds.name && <DatasetPanel ds={ds} />}
               </div>
             ))}
           </div>
