@@ -7,9 +7,9 @@ export default async function handler(req, res) {
     "meta-llama/llama-3.2-3b-instruct:free",
     "google/gemma-3-12b-it:free",
     "mistralai/mistral-small-3.1-24b-instruct:free",
-    "nousresearch/hermes-3-llama-3.1-405b:free",
   ];
 
+  const errors = [];
   for (const model of MODELS) {
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -25,11 +25,11 @@ export default async function handler(req, res) {
         }),
       });
       const data = await response.json();
-      if (data.error) continue;
+      if (data.error) { errors.push(`${model}: ${JSON.stringify(data.error)}`); continue; }
       const text = data.choices?.[0]?.message?.content || "";
       if (text) return res.status(200).json({ text });
-    } catch (e) { continue; }
+    } catch (e) { errors.push(`${model}: ${e.message}`); continue; }
   }
 
-  res.status(500).json({ error: "All models unavailable — try again in a moment." });
+  res.status(500).json({ error: errors.join(" | ") });
 }
